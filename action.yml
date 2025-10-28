@@ -1,5 +1,5 @@
 name: Setup Terraform
-description: Installs Terraform of a specified version
+description: Installs Terraform of a specified version (Linux-only; not compatible with Windows or macOS runners)
 inputs:
   version:
     required: true
@@ -7,15 +7,31 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Check OS Compatibility
+      shell: bash
+      run: |
+        if [ "$(uname)" != "Linux" ]; then
+          echo "Error: This action only supports Linux runners."
+          exit 1
+        fi
+
     - name: Install unzip
       shell: bash
-      run: sudo apt-get update && sudo apt-get install -y unzip
+      run: |
+        if ! command -v unzip >/dev/null 2>&1; then
+          sudo apt-get update
+          sudo apt-get install -y unzip
+        fi
 
     - name: Download Terraform
       shell: bash
       run: |
         wget https://releases.hashicorp.com/terraform/${{ inputs.version }}/terraform_${{ inputs.version }}_linux_amd64.zip -O terraform.zip
         unzip terraform.zip
+        mv terraform /usr/local/bin/
+          echo "Error: terraform binary not found after unzip."
+          exit 1
+        fi
         sudo mv terraform /usr/local/bin/
         rm terraform.zip
 
