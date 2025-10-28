@@ -10,14 +10,14 @@ steps:
 - name: Setup Terraform
     uses: AdnanCekic/setup-terraform@v1
     with:
-        terraform_version: 'latest' # optional, defaults to latest
+        version: 'latest' # optional, defaults to latest
 ```
 
 ## Inputs
 
 | Name | Description | Required | Default |
 |------|-------------|----------|---------|
-| `terraform_version` | Terraform version to install | false | 'latest' |
+| `version` | Terraform version to install | false | 'latest' |
 
 ## Example Workflow
 
@@ -38,7 +38,7 @@ jobs:
         - name: Setup Terraform
             uses: AdnanCekic/setup-terraform@v1
             with:
-                terraform_version: '1.5.0'
+                version: '1.5.0'
         - name: Terraform Init
             run: terraform init
         - name: Terraform Plan
