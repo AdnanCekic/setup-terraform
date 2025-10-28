@@ -8,7 +8,7 @@ This action installs Terraform on GitHub runner environments.
 steps:
 - uses: actions/checkout@v3
 - name: Setup Terraform
-    uses: your-username/setup-terraform@v1
+    uses: AdnanCekic/setup-terraform@v1
     with:
         terraform_version: 'latest' # optional, defaults to latest
 ```
@@ -36,7 +36,7 @@ jobs:
         steps:
         - uses: actions/checkout@v3
         - name: Setup Terraform
-            uses: your-username/setup-terraform@v1
+            uses: AdnanCekic/setup-terraform@v1
             with:
                 terraform_version: '1.5.0'
         - name: Terraform Init
