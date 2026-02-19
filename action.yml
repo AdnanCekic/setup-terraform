@@ -3,7 +3,8 @@ description: Installs Terraform of a specified version (Linux-only; not compatib
 inputs:
   version:
     required: true
-    description: Terraform version to install
+    description: Terraform version to install (e.g. "1.10.5")
+
 runs:
   using: composite
   steps:
@@ -15,26 +16,53 @@ runs:
           exit 1
         fi
 
-    - name: Install unzip
+    - name: Check if Terraform already installed
+      id: check
+      shell: bash
+      run: |
+        if command -v terraform >/dev/null 2>&1 && terraform version | grep -q "v${{ inputs.version }}"; then
+          echo "Terraform ${{ inputs.version }} already installed."
+          echo "skip=true" >> $GITHUB_OUTPUT
+        else
+          echo "skip=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Restore Terraform cache
+      if: steps.check.outputs.skip == 'false'
+      uses: actions/cache@v6
+      id: cache
+      with:
+        path: /tmp/terraform
+        key: terraform-${{ inputs.version }}-${{ runner.os }}
+
+    - name: Install unzip if needed
+      if: steps.check.outputs.skip == 'false' && steps.cache.outputs.cache-hit != 'true'
       shell: bash
       run: |
         if ! command -v unzip >/dev/null 2>&1; then
-          apt-get update
-          apt-get install -y unzip
+          sudo apt-get update -qq
+          sudo apt-get install -y unzip
         fi
 
-    - name: Download Terraform
+    - name: Download and extract Terraform
+      if: steps.check.outputs.skip == 'false' && steps.cache.outputs.cache-hit != 'true'
       shell: bash
       run: |
-        wget https://releases.hashicorp.com/terraform/${{ inputs.version }}/terraform_${{ inputs.version }}_linux_amd64.zip -O terraform.zip
-        unzip terraform.zip
-        mv terraform /usr/local/bin/
+        wget -q https://releases.hashicorp.com/terraform/${{ inputs.version }}/terraform_${{ inputs.version }}_linux_amd64.zip -O /tmp/terraform.zip
+        unzip -q /tmp/terraform.zip -d /tmp
+        if [ ! -f /tmp/terraform ]; then
           echo "Error: terraform binary not found after unzip."
           exit 1
         fi
-        sudo mv terraform /usr/local/bin/
-        rm terraform.zip
+        rm /tmp/terraform.zip
+
+    - name: Install Terraform
+      if: steps.check.outputs.skip == 'false'
+      shell: bash
+      run: |
+        sudo mv /tmp/terraform /usr/local/bin/
+        sudo chmod +x /usr/local/bin/terraform
 
     - name: Verify Terraform
       shell: bash
-      run: terraform -v
+      run: terraform version
